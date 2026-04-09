@@ -1,1 +1,15 @@
-
+# docker-compose.yml
+# ------------------
+# Owner: TBD
+#
+# What this file does:
+#   Starts the entire MemeRAG system with one command.
+#   Spins up 3 services:
+#     1. ollama    - runs Llama 3 locally
+#     2. chromadb  - vector database
+#     3. streamlit - web frontend
+#
+# How to run:
+#   docker-compose up
+#
+# Then open browser at: http://localhost:8501
