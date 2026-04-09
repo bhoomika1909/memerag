@@ -162,7 +162,7 @@ memerag/
 
 ```bash
 # Step 1 — clone the repo
-git clone https://github.com/YOUR_USERNAME/memerag.git
+git clone https://github.com/bhoomika1909/memerag.git
 cd memerag
 
 # Step 2 — add data file
