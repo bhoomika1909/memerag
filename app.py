@@ -391,7 +391,7 @@ st.markdown("""
 # ──────────────────────────────────────────────────────────────────────────────
 st.markdown('<div class="section-label">📝 Drop your meme text</div>', unsafe_allow_html=True)
 
-# THE FIX: Callback function to safely update the text box
+# Callback function to safely update the text box
 def apply_preset(text):
     st.session_state.meme_input_area = text
     st.session_state.result = None
@@ -411,7 +411,7 @@ with input_right:
     pcols = st.columns(4)
     for i, (pc, short_lbl, full_text) in enumerate(zip(pcols, PRESET_LABELS, PRESETS)):
         with pc:
-            # THE FIX: Using on_click instead of if st.button()
+            
             st.button(
                 short_lbl, 
                 key=f"preset_{i}", 
@@ -430,7 +430,7 @@ with input_right:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # LOGIC PIPELINE
 # ──────────────────────────────────────────────────────────────────────────────
 if analyze_clicked and meme_input.strip():
