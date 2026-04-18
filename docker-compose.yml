@@ -1,6 +1,6 @@
 # docker-compose.yml
 # ------------------
-# Owner: TBD
+# Owner: Syed Ibrahim Saleem
 #
 # What this file does:
 #   Starts the entire MemeRAG system with one command.
@@ -13,3 +13,44 @@
 #   docker-compose up
 #
 # Then open browser at: http://localhost:8501
+services:
+  # 1. The Brain (Ollama)
+  # This container runs Llama 3 internally.
+  ollama:
+    image: ollama/ollama:latest
+    container_name: memerag_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_storage:/root/.ollama  # Keeps your Llama 3 download safe
+
+  # 2. Standalone Vector Database (ChromaDB)
+  # This container handles your 8,500 meme embeddings.
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: memerag_chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_data:/chroma/chroma
+
+  # 3. Streamlit Web Frontend (MemeRAG UI)
+  streamlit:
+    build: .
+    container_name: memerag_ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+      - ./demo_images:/app/demo_images
+    environment:
+      - CHROMA_HOST=memerag_chroma
+      - CHROMA_PORT=8000
+      - OLLAMA_URL=http://ollama:11434  # Tells UI to talk to the 'ollama' container
+    depends_on:
+      - ollama
+      - chromadb
+
+# Persistent volume for your LLM models
+volumes:
+  ollama_storage:
