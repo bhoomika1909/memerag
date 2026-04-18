@@ -112,9 +112,9 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df["dataset"] = "facebook"
 
     # add source URL for clickable citations in the app
-    # format: https://hatefulmemeschallenge.com/#ID
+    # format: data/train.jsonl#id=42953
     df["source_url"] = df["id"].apply(
-        lambda x: f"https://hatefulmemeschallenge.com/#{x}"
+        lambda x: f"data/train.jsonl#id={x}"
     )
 
     return df
