@@ -1,56 +1,42 @@
-# docker-compose.yml
-# ------------------
-# Owner: Syed Ibrahim Saleem
-#
-# What this file does:
-#   Starts the entire MemeRAG system with one command.
-#   Spins up 3 services:
-#     1. ollama    - runs Llama 3 locally
-#     2. chromadb  - vector database
-#     3. streamlit - web frontend
-#
-# How to run:
-#   docker-compose up
-#
-# Then open browser at: http://localhost:8501
+version: '3.8'
+
 services:
-  # 1. The Brain (Ollama)
-  # This container runs Llama 3 internally.
+
+  # 1. Llama 3 engine — runs entirely on GCP
   ollama:
     image: ollama/ollama:latest
     container_name: memerag_ollama
     ports:
-      - "11434:11434"
+      - "11435:11435"
     volumes:
-      - ollama_storage:/root/.ollama  # Keeps your Llama 3 download safe
+      - ollama_storage:/root/.ollama
 
-  # 2. Standalone Vector Database (ChromaDB)
-  # This container handles your 8,500 meme embeddings.
+  # 2. Vector database — stores 33,000 meme embeddings (Facebook + Twitter)
+  # data/chromadb/ must be populated via ingest.py + ingest_twitter.py before running
   chromadb:
     image: chromadb/chroma:latest
     container_name: memerag_chroma
     ports:
       - "8000:8000"
     volumes:
-      - ./chroma_data:/chroma/chroma
+      - ./data/chromadb:/data   # matches CHROMA_PATH in ingest.py
 
-  # 3. Streamlit Web Frontend (MemeRAG UI)
+  # 3. Streamlit frontend — publicly accessible at GCP_IP:8501
   streamlit:
     build: .
     container_name: memerag_ui
     ports:
       - "8501:8501"
     volumes:
-      - .:/app
       - ./demo_images:/app/demo_images
+      - ./data:/app/data
     environment:
-      - CHROMA_HOST=memerag_chroma
+      - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000
-      - OLLAMA_URL=http://ollama:11434  # Tells UI to talk to the 'ollama' container
+      - OLLAMA_BASE_URL=http://ollama:11435
     depends_on:
       - ollama
       - chromadb
 
-# Persistent volume for your LLM models
 volumes:
   ollama_storage:

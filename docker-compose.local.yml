@@ -1,0 +1,48 @@
+# docker-compose.local.yml
+# ─────────────────────────────────────────────────────────────────
+# LOCAL TESTING ONLY — not for GCP deployment
+# Use this to test the full system on your laptop before April 21.
+#
+# What this does:
+#   - Runs ChromaDB locally on your laptop
+#   - Runs Streamlit locally on your laptop
+#   - Points Ollama at the LIVE GCP VM (already running)
+#
+# Prerequisites:
+#   1. Run python ingest.py first to populate data/chromadb/
+#   2. GCP VM must be running (Ollama at 34.10.8.118:11435)
+#
+# How to use:
+#   docker-compose -f docker-compose.local.yml up
+#   Then open: http://localhost:8501
+# ─────────────────────────────────────────────────────────────────
+
+version: '3.8'
+
+services:
+
+  # Local ChromaDB — mounts your pre-populated data/chromadb/
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: memerag_chroma_local
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/chromadb:/data
+
+  # Local Streamlit — points Ollama at live GCP VM
+  streamlit:
+    build: .
+    container_name: memerag_ui_local
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./demo_images:/app/demo_images
+      - ./data:/app/data
+    environment:
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      # Ollama on live GCP VM — no local GPU needed
+      - OLLAMA_BASE_URL=http://34.10.8.118:11435
+    depends_on:
+      - chromadb
