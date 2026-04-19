@@ -24,9 +24,9 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 
 # ── settings ───────────────────────────────────────────────────────────────
-# FIX #1 — read OLLAMA_BASE_URL to match docker-compose env var name
+# Read OLLAMA_BASE_URL to match docker-compose env var name
 OLLAMA_URL      = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL    = "llama3"
+OLLAMA_MODEL    = "llama3:latest"
 COLLECTION_NAME = "memes"
 EMBED_MODEL     = "all-MiniLM-L6-v2"
 TOP_K           = 5
@@ -38,13 +38,9 @@ embed_model = SentenceTransformer(EMBED_MODEL)
 
 print("Connecting to ChromaDB...")
 host = os.getenv("CHROMA_HOST", "localhost")
-# Use PersistentClient when running directly (no Docker)
-# Use HttpClient when running inside Docker (CHROMA_HOST set via env var)
-if host == "localhost":
-    chroma_client = chromadb.PersistentClient(path="data/chromadb")
-else:
-    port = int(os.getenv("CHROMA_PORT", "8000"))
-    chroma_client = chromadb.HttpClient(host=host, port=port)
+
+port = int(os.getenv("CHROMA_PORT", "8000"))
+chroma_client = chromadb.PersistentClient(path="data/chromadb")
 
 collection = chroma_client.get_collection(COLLECTION_NAME)
 print(f"Ready! ChromaDB has {collection.count()} memes.")
@@ -61,7 +57,7 @@ def retrieve_similar_memes(meme_text: str) -> list:
     results = collection.query(
         query_embeddings = query_embedding,
         n_results        = TOP_K,
-        # FIX #3 — include "ids" so results["ids"] doesn't KeyError
+
         include          = ["documents", "metadatas", "distances"],
     )
 
@@ -72,7 +68,7 @@ def retrieve_similar_memes(meme_text: str) -> list:
         label_str = "hateful" if label == 1 else "not hateful"
 
         similar_memes.append({
-            # FIX #4 — expose both string chroma id and integer meme_id
+            # Expose both string chroma id and integer meme_id
             "id"         : results["ids"][0][i],
             "meme_id"    : metadata.get("meme_id", metadata.get("id", 0)),
             "text"       : results["documents"][0][i],
@@ -120,7 +116,7 @@ CONFIDENCE: [a decimal between 0.0 and 1.0 representing your confidence, e.g. 0.
 def call_llama(prompt: str) -> str:
     """
     Sends the prompt to Llama 3 on GCP via Ollama.
-    FIX #7 — timeout reduced to 120 seconds (was 500).
+    
     """
     try:
         response = requests.post(
@@ -131,7 +127,7 @@ def call_llama(prompt: str) -> str:
                 "stream" : False,
                 "options": {"temperature": 0.05},
             },
-            timeout=500,
+            timeout=300,
         )
         return response.json().get("response", "ERROR: empty response")
     except requests.exceptions.ConnectionError:
@@ -175,7 +171,7 @@ def parse_response(llm_response: str, top_citation: dict) -> dict:
     except Exception:
         pass
 
-    # FIX #6 — heuristic override only fires on near-exact match
+    # Heuristic override only fires on near-exact match
     # and is transparent in the reasoning text
     db_dist  = top_citation.get("distance", 1.0)
     db_label = top_citation.get("label_str", "not hateful")
@@ -194,7 +190,7 @@ def parse_response(llm_response: str, top_citation: dict) -> dict:
     if confidence is None:
         confidence = round(max(0.5, 1.0 - (db_dist / 2.0)), 2)
 
-    # FIX #8 — neutral fallback text that doesn't imply hate for safe memes
+    # Neutral fallback text that doesn't imply hate for safe memes
     if not explanation:
         explanation = "The model processed this meme but could not generate a structured explanation."
     if not reasoning:
@@ -217,7 +213,7 @@ def analyze_meme(meme_text: str) -> dict:
         explanation  (str)
         hate_label   (str: "hateful" or "not hateful")
         reasoning    (str)
-        confidence   (float: 0.0 – 1.0)
+        confidence   (float: 0.0 - 1.0)
         id           (int: meme_id of top retrieved result, for image preview)
         citations    (list of dicts)
     """
@@ -262,7 +258,6 @@ def analyze_meme(meme_text: str) -> dict:
             "hate_label" : "uncertain",
             "reasoning"  : "System error — check GCP VM and Ollama service.",
             "confidence" : 0.0,
-            # FIX #9 — still return id and citations so UI renders what it can
             "id"         : top_hit.get("meme_id", ""),
             "citations"  : similar_memes,
         }
@@ -276,7 +271,6 @@ def analyze_meme(meme_text: str) -> dict:
         "hate_label" : parsed["hate_label"],
         "reasoning"  : parsed["reasoning"],
         "confidence" : parsed["confidence"],
-        # FIX #9 — top-level id enables image preview in app.py
         "id"         : top_hit.get("meme_id", ""),
         "citations"  : similar_memes,
     }
