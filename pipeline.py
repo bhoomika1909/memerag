@@ -1,7 +1,7 @@
 """
 pipeline.py
 -----------
-Owner: Ibrahim Syed & Bhoomika Panday
+Owner: Bhoomika Panday
 Project: MemeRAG (CS 6120)
 
 What this file does:
@@ -24,7 +24,7 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 
 # ── settings ───────────────────────────────────────────────────────────────
-# FIX #1 — read OLLAMA_BASE_URL to match docker-compose env var name
+# Read OLLAMA_BASE_URL to match docker-compose env var name
 OLLAMA_URL      = os.getenv("OLLAMA_BASE_URL", "http://34.10.8.118:11435")
 OLLAMA_MODEL    = "llama3"
 COLLECTION_NAME = "memes"
@@ -38,7 +38,7 @@ embed_model = SentenceTransformer(EMBED_MODEL)
 
 print("Connecting to ChromaDB...")
 host = os.getenv("CHROMA_HOST", "localhost")
-# FIX #2 — cast port to int
+
 port = int(os.getenv("CHROMA_PORT", "8000"))
 chroma_client = chromadb.HttpClient(host=host, port=port)
 
@@ -57,7 +57,7 @@ def retrieve_similar_memes(meme_text: str) -> list:
     results = collection.query(
         query_embeddings = query_embedding,
         n_results        = TOP_K,
-        # FIX #3 — include "ids" so results["ids"] doesn't KeyError
+
         include          = ["documents", "metadatas", "distances"],
     )
 
@@ -68,7 +68,7 @@ def retrieve_similar_memes(meme_text: str) -> list:
         label_str = "hateful" if label == 1 else "not hateful"
 
         similar_memes.append({
-            # FIX #4 — expose both string chroma id and integer meme_id
+            # Expose both string chroma id and integer meme_id
             "id"         : results["ids"][0][i],
             "meme_id"    : metadata.get("meme_id", metadata.get("id", 0)),
             "text"       : results["documents"][0][i],
@@ -116,7 +116,7 @@ CONFIDENCE: [a decimal between 0.0 and 1.0 representing your confidence, e.g. 0.
 def call_llama(prompt: str) -> str:
     """
     Sends the prompt to Llama 3 on GCP via Ollama.
-    FIX #7 — timeout reduced to 120 seconds (was 500).
+    
     """
     try:
         response = requests.post(
@@ -171,7 +171,7 @@ def parse_response(llm_response: str, top_citation: dict) -> dict:
     except Exception:
         pass
 
-    # FIX #6 — heuristic override only fires on near-exact match
+    # Heuristic override only fires on near-exact match
     # and is transparent in the reasoning text
     db_dist  = top_citation.get("distance", 1.0)
     db_label = top_citation.get("label_str", "not hateful")
@@ -190,7 +190,7 @@ def parse_response(llm_response: str, top_citation: dict) -> dict:
     if confidence is None:
         confidence = round(max(0.5, 1.0 - (db_dist / 2.0)), 2)
 
-    # FIX #8 — neutral fallback text that doesn't imply hate for safe memes
+    # Neutral fallback text that doesn't imply hate for safe memes
     if not explanation:
         explanation = "The model processed this meme but could not generate a structured explanation."
     if not reasoning:
