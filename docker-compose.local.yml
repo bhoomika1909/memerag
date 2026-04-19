@@ -1,3 +1,6 @@
+# Owner: Syed Ibrahim Saleem
+# MemeRAG — Dockerfile
+
 # docker-compose.local.yml
 # ─────────────────────────────────────────────────────────────────
 # LOCAL TESTING ONLY — not for GCP deployment
