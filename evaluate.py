@@ -29,7 +29,7 @@ from pipeline import analyze_meme
 
 # ── settings ───────────────────────────────────────────────────────────────
 EVAL_PATH   = "data/dev.jsonl"
-SAMPLE_SIZE = 50    # set to e.g. 100 for a quick test run, None for full 500
+SAMPLE_SIZE = None    # set to e.g. 100 for a quick test run, None for full 500
 
 
 # ── step 1: load eval data ─────────────────────────────────────────────────
