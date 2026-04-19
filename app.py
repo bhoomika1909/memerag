@@ -1,10 +1,29 @@
+"""
+app.py
+------
+Owner: Syed Ibrahim Saleem
+
+What this file does:
+    1. Streamlit web interface for MemeRAG
+    2. Takes meme text input from the user
+    3. Calls pipeline.py to retrieve similar memes and run Llama 3
+    4. Displays explanation, hate label badge, confidence score
+    5. Shows 5 retrieved evidence citations with exact data chunk locations
+
+How to run:
+    streamlit run app.py
+
+Then open browser at: http://localhost:8501
+For GCP deployment: http://34.10.8.118:8501
+"""
+
 import os
 import re
 import time
 import streamlit as st
 from pipeline import analyze_meme as run_pipeline
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # PAGE CONFIG
 # ──────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -14,7 +33,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # FONTS + GLOBAL CSS
 # ──────────────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -244,7 +263,6 @@ html, body, [class*="css"] { font-family:'Nunito',sans-serif !important; }
 """, unsafe_allow_html=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # CONSTANTS & HELPERS
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -356,7 +374,6 @@ def extract_id_from_source_url(source_url: str) -> str:
         return ""
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # SESSION STATE
 # ──────────────────────────────────────────────────────────────────────────────
 # Streamlit 1.56+ fix — use widget key directly as session state key
@@ -368,13 +385,12 @@ if "run_effects" not in st.session_state:
     st.session_state.run_effects = False
 
 
-# FIX #10 — callback writes to meme_text, not to the widget key
+# Callback writes to meme_text, not to the widget key
 def apply_preset(text: str):
     st.session_state["meme_text"] = text
     st.session_state.result       = None
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # NAVBAR
 # ──────────────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -401,7 +417,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # INPUT
 # ──────────────────────────────────────────────────────────────────────────────
 st.markdown('<div class="card card-input"><div class="section-label">📝 Drop your meme text</div>', unsafe_allow_html=True)
@@ -441,7 +456,6 @@ with input_right:
 st.markdown('</div>', unsafe_allow_html=True)   # /card-input
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # PIPELINE
 # ──────────────────────────────────────────────────────────────────────────────
 if analyze_clicked and meme_input.strip():
@@ -459,7 +473,6 @@ if analyze_clicked and meme_input.strip():
 
     bar_slot.markdown(thinking_bar_html(2), unsafe_allow_html=True)
 
-    # FIX #12 — graceful error handling instead of st.stop()
     try:
         result = run_pipeline(meme_input.strip())
         st.session_state.result = result
@@ -479,7 +492,7 @@ if analyze_clicked and meme_input.strip():
     bar_slot.empty()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # SPLIT-SCREEN RESULTS
 # ──────────────────────────────────────────────────────────────────────────────
 left_col, right_col = st.columns([1.1, 1], gap="large")
@@ -560,7 +573,7 @@ with right_col:
 
         reasoning = r.get("rationale", r.get("reasoning", "No reasoning returned."))
 
-        # FIX #28 — handle both float (0.78) and int (78) confidence formats
+        # Handle both float (0.78) and int (78) confidence formats
         raw_conf = r.get("confidence", 0.75)
         try:
             raw_conf = float(raw_conf)
@@ -596,7 +609,7 @@ with right_col:
             st.session_state.run_effects = False
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # RETRIEVED EVIDENCE — full width
 # ──────────────────────────────────────────────────────────────────────────────
 if st.session_state.result:
