@@ -1,4 +1,4 @@
-# FIX #1 — correct folder name (was chroma_data, actual folder is chroma_db)
+# Folder name - chroma_db
 chroma_db/
 
 # data files — mounted via docker-compose volume at runtime
@@ -6,7 +6,6 @@ data/
 
 # Python cache
 __pycache__/
-# FIX #3 — compiled python files
 *.pyc
 *.pyo
 
@@ -15,8 +14,8 @@ __pycache__/
 
 # git
 .git/
-# FIX #4 — gitignore not needed in image
+# gitignore not needed in image
 .gitignore
 
-# FIX #2 — exclude large jsonl data files
+# For excluding large jsonl data files
 *.jsonl
