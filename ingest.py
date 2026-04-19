@@ -9,7 +9,7 @@ What this file does:
     3. Generates sentence embeddings using all-MiniLM-L6-v2
     4. Stores everything into ChromaDB (persistent local client)
 
-Input:  data/train.jsonl        — 8,500 labeled entries
+Input:  data/train.jsonl — 8,500 labeled entries
 Output: ChromaDB collection at data/chromadb/
 
 IMPORTANT:
@@ -205,7 +205,5 @@ if __name__ == "__main__":
     store_in_chromadb(df)
     verify_chromadb()
 
-    print("=" * 55)
     print(f" Facebook ingestion complete — {len(df)} entries stored.")
     print(" Next: python ingest_twitter.py")
-    print("=" * 55)
