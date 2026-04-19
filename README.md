@@ -8,7 +8,7 @@
 ## What This System Does
 
 MemeRAG takes meme text as input and:
-- Retrieves the 5 most semantically similar memes from a database of **33,000 labeled entries** (Facebook + Twitter)
+- Retrieves the 5 most semantically similar memes from a database of **33,000 labeled entries** (Facebook + Twitter) 
 - Explains the meme's meaning in plain English using **Llama 3** running locally on GCP
 - Classifies the meme as **hateful or not hateful** with supporting reasoning
 - Cites every retrieved source with a **clickable link** back to the original dataset entry
