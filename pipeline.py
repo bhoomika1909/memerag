@@ -131,7 +131,7 @@ def call_llama(prompt: str) -> str:
                 "stream" : False,
                 "options": {"temperature": 0.05},
             },
-            timeout=120,
+            timeout=500,
         )
         return response.json().get("response", "ERROR: empty response")
     except requests.exceptions.ConnectionError:
