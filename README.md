@@ -1,7 +1,7 @@
 # MemeRAG — Meme Understanding & Hate Detection
 
 **Course:** CS 6120 — Natural Language Processing | Northeastern University | Spring 2026  
-**Team:** Bhoomika Panday · Srijita Nath · Ibrahim · Yazi
+**Team:** Bhoomika Panday · Srijita Nath · Syed Ibrahim Saleem · Yazi
 
 ---
 
