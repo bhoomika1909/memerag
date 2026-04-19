@@ -266,11 +266,6 @@ html, body, [class*="css"] { font-family:'Nunito',sans-serif !important; }
 # CONSTANTS & HELPERS
 # ──────────────────────────────────────────────────────────────────────────────
 
-# Demo presets — texts match files in demo_images/
-# 08924 → "when you already started eating and someone says 'lets pray'"  (safe)
-# 09312 → "need a hug ? i love hugs"                                      (safe)
-# 18307 → "when people talk trash but you're a bigger person"             (safe)
-# 10256 → "and if anything happens, the women are to blame..."            (hateful)
 PRESETS = [
     "when you already started eating and someone says 'lets pray'",
     "need a hug ? i love hugs",
@@ -340,12 +335,6 @@ def toast_html(is_hateful: bool, confidence: int) -> str:
 
 
 def try_load_image(meme_id: str):
-    """
-    Robust image lookup for Facebook demo images only.
-    Strips non-numeric chars (handles 'facebook_08924', '8924', '08924').
-    Tries both raw and zero-padded filenames across all extensions.
-    Returns None for Twitter entries — they have no images.
-    """
     if not meme_id:
         return None
     clean_id = re.sub(r'[^0-9]', '', str(meme_id))
@@ -360,12 +349,6 @@ def try_load_image(meme_id: str):
 
 
 def extract_id_from_source_url(source_url: str) -> str:
-    """
-    Extracts the meme ID from the source_url field.
-    source_url format: data/train.jsonl#id=42953
-                   or: data/labeled_data.csv#id=900042
-    Returns the ID as a string, or empty string if not found.
-    """
     if not source_url:
         return ""
     try:
@@ -376,7 +359,6 @@ def extract_id_from_source_url(source_url: str) -> str:
 
 # SESSION STATE
 # ──────────────────────────────────────────────────────────────────────────────
-# Streamlit 1.56+ fix — use widget key directly as session state key
 if "meme_text" not in st.session_state:
     st.session_state["meme_text"] = ""
 if "result" not in st.session_state:
@@ -385,7 +367,6 @@ if "run_effects" not in st.session_state:
     st.session_state.run_effects = False
 
 
-# Callback writes to meme_text, not to the widget key
 def apply_preset(text: str):
     st.session_state["meme_text"] = text
     st.session_state.result       = None
@@ -424,7 +405,6 @@ st.markdown('<div class="card card-input"><div class="section-label">📝 Drop y
 input_left, input_right = st.columns([1.6, 1], gap="medium")
 
 with input_left:
-    # Streamlit 1.56+ — use key="meme_text" directly, no value= needed
     meme_input = st.text_area(
         label="meme_text_area",
         placeholder="paste meme text here…",
@@ -437,7 +417,6 @@ with input_right:
     pcols = st.columns(4)
     for i, (pc, short_lbl, full_text) in enumerate(zip(pcols, PRESET_LABELS, PRESETS)):
         with pc:
-            # preset sets meme_text which is also the textarea key — triggers rerun
             st.button(
                 short_lbl,
                 key=f"preset_{i}",
@@ -453,13 +432,12 @@ with input_right:
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)   # /card-input
+st.markdown('</div>', unsafe_allow_html=True)
 
 
 # PIPELINE
 # ──────────────────────────────────────────────────────────────────────────────
 if analyze_clicked and meme_input.strip():
-    # meme_text is the widget key — value is already in session_state automatically
     st.session_state.result      = None
     st.session_state.run_effects = True
 
@@ -492,7 +470,6 @@ if analyze_clicked and meme_input.strip():
     bar_slot.empty()
 
 
-
 # SPLIT-SCREEN RESULTS
 # ──────────────────────────────────────────────────────────────────────────────
 left_col, right_col = st.columns([1.1, 1], gap="large")
@@ -516,8 +493,6 @@ with left_col:
           </div>
         </div>""", unsafe_allow_html=True)
     else:
-        # image card — only shown for Facebook entries
-        # extract dataset and id from top citation's source_url
         citations_list = st.session_state.result.get("citations", [])
         top_dataset    = citations_list[0].get("dataset", "facebook") if citations_list else "facebook"
         top_source_url = citations_list[0].get("source_url", "") if citations_list else ""
@@ -573,7 +548,6 @@ with right_col:
 
         reasoning = r.get("rationale", r.get("reasoning", "No reasoning returned."))
 
-        # Handle both float (0.78) and int (78) confidence formats
         raw_conf = r.get("confidence", 0.75)
         try:
             raw_conf = float(raw_conf)
@@ -582,7 +556,6 @@ with right_col:
             confidence = 75
         confidence = max(0, min(100, confidence))
 
-        # toast
         st.markdown(toast_html(is_hateful, confidence), unsafe_allow_html=True)
 
         st.markdown(f"""
@@ -600,14 +573,12 @@ with right_col:
           </div>
         </div>""", unsafe_allow_html=True)
 
-        # balloons / snow
         if st.session_state.get("run_effects"):
             if is_hateful:
                 st.snow()
             else:
                 st.balloons()
             st.session_state.run_effects = False
-
 
 
 # RETRIEVED EVIDENCE — full width
@@ -628,31 +599,24 @@ if st.session_state.result:
         img_cols = st.columns(len(sources[:5]))
         for col, s in zip(img_cols, sources[:5]):
             with col:
-                # Rule 1: never modify source_url — display exactly as received
                 ev_url     = s.get("source_url", "#")
                 ev_dataset = s.get("dataset", "facebook")
                 ev_text    = s.get("text", "—")
                 ev_dist    = s.get("distance", "N/A")
 
-                # Rule 2: use dataset to decide image
-                # Rule 3: Facebook → try image from demo_images/
-                # Rule 4: Twitter → no image
                 if ev_dataset == "facebook":
                     ev_id  = extract_id_from_source_url(ev_url)
                     ev_img = try_load_image(ev_id)
                 else:
                     ev_id  = extract_id_from_source_url(ev_url)
-                    ev_img = None   # Twitter has no images
+                    ev_img = None
 
                 # label handling
-                label_raw  = s.get("label_str", s.get("label", 0))
+                label_raw  = s.get("label", 0)
                 try:
                     is_ev_hate = int(label_raw) == 1
                 except (ValueError, TypeError):
                     is_ev_hate = "hate" in str(label_raw).lower() and "not" not in str(label_raw).lower()
-
-                tag_text  = "hateful" if is_ev_hate else "safe"
-                tag_color = "#FFB5A7" if is_ev_hate else "#B8F0D8"
 
                 if ev_img:
                     st.image(ev_img, use_container_width=True)
@@ -677,21 +641,16 @@ if st.session_state.result:
                     <span style="font-size:10px;font-weight:700;color:#4A1D8F;">
                       {ev_dataset.upper()}
                     </span>
-                    <span style="font-size:10px;font-weight:700;
-                                 background:{tag_color};padding:2px 7px;
-                                 border-radius:10px;color:#1a1a1a;">
-                      {tag_text}
-                    </span>
                   </div>
                   <div style="font-size:11px;color:#555;line-height:1.4;
                               margin-bottom:6px;">
-                    "{ev_text[:60]}{'…' if len(ev_text) > 60 else ''}"
+                    "{ev_text[:60]}{'...' if len(ev_text) > 60 else ''}"
                   </div>
                   <div style="font-family:'Courier New',monospace;font-size:10px;
                               font-weight:700;color:#185FA5;word-break:break-all;
                               background:#f0f4ff;border:1px solid #c8d8ff;
                               border-radius:4px;padding:4px 6px;margin-top:4px;">
-                    📎 {ev_url}
+                    <a href="{ev_url}" target="_blank" style="color:#185FA5;font-size:10px;word-break:break-all;">{ev_url}</a>
                   </div>
                   <span style="font-size:10px;color:#888;">
                     dist: {ev_dist}
