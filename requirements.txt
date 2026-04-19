@@ -2,14 +2,14 @@
 torch --index-url https://download.pytorch.org/whl/cpu
 transformers
 sentence-transformers
-# FIX #4 — pin numpy to avoid torch CPU conflict
+# pin numpy to avoid torch CPU conflict
 numpy>=1.24.0,<2.0.0
 
 # Vector database
 chromadb
 
 # UI
-# FIX #1 — bumped from 1.33.0 (too old, gap param broken)
+# bumped from 1.33.0 (too old, gap param broken)
 streamlit>=1.35.0
 
 # HTTP + data
@@ -17,11 +17,11 @@ requests
 pandas
 
 # Text processing
-# FIX #3 — pin to v2, demojize() API changed between v1 and v2
+# pin to v2, demojize() API changed between v1 and v2
 emoji>=2.0.0
 
 # Ollama Python SDK
-# FIX #5 — pin to avoid breaking changes
+# pin to avoid breaking changes
 ollama>=0.1.8
 
-# FIX #2 — removed langchain and langchain-community (unused, +500MB image bloat)
+# removed langchain and langchain-community (unused, +500MB image bloat)
