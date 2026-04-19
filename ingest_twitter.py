@@ -258,8 +258,6 @@ if __name__ == "__main__":
     store_in_chromadb(df)
     verify_combined_collection()
 
-    print("=" * 55)
     print(" Twitter ingestion complete!")
     print(" Facebook + Twitter data are now in ChromaDB.")
     print(" Next: docker-compose up (on GCP VM)")
-    print("=" * 55)
