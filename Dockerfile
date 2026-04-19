@@ -1,3 +1,6 @@
+# Owner: Syed Ibrahim Saleem
+# MemeRAG — Dockerfile
+
 FROM python:3.10-slim
 
 WORKDIR /app
