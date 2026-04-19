@@ -1,3 +1,6 @@
+# Owner: Syed Ibrahim Saleem
+# MemeRAG — Dockerfile
+
 version: '3.8'
 
 services:
