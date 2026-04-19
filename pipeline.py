@@ -38,9 +38,13 @@ embed_model = SentenceTransformer(EMBED_MODEL)
 
 print("Connecting to ChromaDB...")
 host = os.getenv("CHROMA_HOST", "localhost")
-# FIX #2 — cast port to int
-port = int(os.getenv("CHROMA_PORT", "8000"))
-chroma_client = chromadb.HttpClient(host=host, port=port)
+# Use PersistentClient when running directly (no Docker)
+# Use HttpClient when running inside Docker (CHROMA_HOST set via env var)
+if host == "localhost":
+    chroma_client = chromadb.PersistentClient(path="data/chromadb")
+else:
+    port = int(os.getenv("CHROMA_PORT", "8000"))
+    chroma_client = chromadb.HttpClient(host=host, port=port)
 
 collection = chroma_client.get_collection(COLLECTION_NAME)
 print(f"Ready! ChromaDB has {collection.count()} memes.")
