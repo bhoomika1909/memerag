@@ -160,10 +160,10 @@ Evaluation set: `data/dev.jsonl` — 500 human-labeled entries, never ingested i
 
 | Member | Module | Files |
 |--------|--------|-------|
-| Bhoomika Panday | RAG Pipeline & LLM | `pipeline.py` |
-| Srijita Nath | Data & ChromaDB | `ingest.py`, `ingest_twitter.py`, `README.md` |
-| Ibrahim | Frontend & Docker | `app.py`, `docker-compose.yml`, `Dockerfile` |
-| Yazi | Evaluation & Report | `evaluate.py` |
+| Bhoomika Panday | RAG Pipeline, LLM Prompt Engineering, ChromaDB Setup, GCP Deployment | `pipeline.py`, `ingest.py` |
+| Srijita Nath | Data Ingestion, Twitter Data Transformation, GCP VM Setup, Pipeline Debugging & Error Correction, Prompt Engineering, Evaluation Design, README | `ingest.py`, `ingest_twitter.py`, `README.md`, `data/twitter_eval.jsonl` |
+| Syed Ibrahim Saleem | Streamlit Frontend, Docker, GCP Deployment, Report Writing | `app.py`, `docker-compose.yml`, `Dockerfile` |
+| Yazi | Evaluation Framework, F1/Precision/Recall Metrics, Report Writing | `evaluate.py` |
 
 ---
 
