@@ -75,6 +75,8 @@ memerag/
 
 ---
 
+---
+
 ## Setup & Run (GCP — Recommended)
 
 ### Step 1 — Clone the repo
@@ -90,16 +92,17 @@ cd memerag
 ```bash
 pip install kaggle
 kaggle datasets download -d parthplc/facebook-hateful-meme-dataset
-unzip facebook-hateful-meme-dataset.zip
-mv train.jsonl data/train.jsonl
-mv dev.jsonl data/dev.jsonl
+unzip facebook-hateful-meme-dataset.zip -d data/
+mv data/data/train.jsonl data/train.jsonl
+mv data/data/dev.jsonl data/dev.jsonl
 ```
 
 **Twitter dataset:**
 ```bash
 kaggle datasets download -d mrmorj/hate-speech-and-offensive-language-dataset
-unzip hate-speech-and-offensive-language-dataset.zip
-mv labeled_data.csv data/labeled_data.csv
+unzip hate-speech-and-offensive-language-dataset.zip -d data/
+# This creates data/labeled_data.csv
+# ingest_twitter.py reads labeled_data.csv and processes it into twitter_export.jsonl
 ```
 
 ### Step 3 — Build the ChromaDB database (run once)
@@ -109,30 +112,34 @@ python ingest.py             # Facebook: ~8,473 entries, ~10-15 min
 python ingest_twitter.py     # Twitter: ~24,527 entries, ~30-45 min
 ```
 
-### Step 4 — Start everything with one command
+> **IMPORTANT:** ChromaDB data is stored in `data/chromadb/` (no underscore). Do not rename this folder.
+
+### Step 4 — Start Ollama and the app
 
 ```bash
-docker-compose up
+ollama pull llama3
+ollama serve &
+streamlit run app.py --server.port 8501 --server.address 0.0.0.0
 ```
 
 ### Step 5 — Open the app
-
-```
 http://YOUR_GCP_EXTERNAL_IP:8501
-```
 
-> **GCP firewall rules required:** ports `8501` (Streamlit), `11435` (Ollama), `8000` (ChromaDB)
+> **GCP firewall rules required:** ports `8501` (Streamlit), `11434` (Ollama)
 
 ---
 
 ## Evaluation
 
 ```bash
-python evaluate.py
+python evaluate.py              # Full 500-sample evaluation (~3-8 hours on CPU)
+python evaluate.py --sample 50  # Quick test with 50 samples (~1 hour on CPU)
 ```
 
 Outputs: F1 score (macro), precision, recall, accuracy, confusion matrix.  
 Evaluation set: `data/dev.jsonl` — 500 human-labeled entries, never ingested into ChromaDB.
+
+> **Note:** Make sure Ollama is running (`ollama serve &`) before running evaluation, otherwise all predictions will default to "not hateful".
 
 ---
 
@@ -141,10 +148,10 @@ Evaluation set: `data/dev.jsonl` — 500 human-labeled entries, never ingested i
 | Component | Technology |
 |-----------|-----------|
 | Frontend | Streamlit |
-| Vector Database | ChromaDB |
+| Vector Database | ChromaDB (PersistentClient) |
 | Embedding Model | all-MiniLM-L6-v2 |
 | LLM | Llama 3 8B via Ollama |
-| Infrastructure | Google Cloud Platform |
+| Infrastructure | Google Cloud Platform (e2-standard-4) |
 | Containerization | Docker + docker-compose |
 
 ---
