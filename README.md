@@ -124,7 +124,7 @@ streamlit run app.py --server.port 8501 --server.address 0.0.0.0
 
 ### Step 5 — Open the app
 http://YOUR_GCP_EXTERNAL_IP:8501
-
+http://136.117.103.21:8501
 > **GCP firewall rules required:** ports `8501` (Streamlit), `11434` (Ollama)
 
 ---
