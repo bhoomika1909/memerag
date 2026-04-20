@@ -24,7 +24,6 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 
 # ── settings ───────────────────────────────────────────────────────────────
-# Read OLLAMA_BASE_URL to match docker-compose env var name
 OLLAMA_URL      = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL    = "llama3:latest"
 COLLECTION_NAME = "memes"
@@ -38,7 +37,6 @@ embed_model = SentenceTransformer(EMBED_MODEL)
 
 print("Connecting to ChromaDB...")
 host = os.getenv("CHROMA_HOST", "localhost")
-
 port = int(os.getenv("CHROMA_PORT", "8000"))
 chroma_client = chromadb.PersistentClient(path="data/chromadb")
 
@@ -57,7 +55,6 @@ def retrieve_similar_memes(meme_text: str) -> list:
     results = collection.query(
         query_embeddings = query_embedding,
         n_results        = TOP_K,
-
         include          = ["documents", "metadatas", "distances"],
     )
 
@@ -68,7 +65,6 @@ def retrieve_similar_memes(meme_text: str) -> list:
         label_str = "hateful" if label == 1 else "not hateful"
 
         similar_memes.append({
-            # Expose both string chroma id and integer meme_id
             "id"         : results["ids"][0][i],
             "meme_id"    : metadata.get("meme_id", metadata.get("id", 0)),
             "text"       : results["documents"][0][i],
@@ -86,14 +82,31 @@ def retrieve_similar_memes(meme_text: str) -> list:
 def build_prompt(meme_text: str, similar_memes: list) -> str:
     """
     Builds the RAG-augmented prompt sent to Llama 3.
-    FIX #5 — clean academic framing, no jailbreak language.
-    FIX #9 — includes CONFIDENCE field so UI bar shows real values.
+    Includes explicit hateful/not hateful definitions and few-shot examples
+    to improve detection accuracy on both explicit and implicit hate speech.
     """
     context = ""
     for i, meme in enumerate(similar_memes):
         context += f"{i+1}. Text: \"{meme['text']}\" | Label: {meme['label_str']}\n"
 
     prompt = f"""You are a hate speech detection system for internet memes, used in academic research at Northeastern University (CS 6120).
+
+A meme is HATEFUL if it explicitly: attacks people based on race, ethnicity, religion, gender, sexual orientation, or nationality; uses slurs or dehumanizing language toward a group; promotes violence or discrimination toward any group.
+A meme is NOT HATEFUL if it: is sarcastic or humorous without targeting a group; is a general complaint or frustration directed at an individual; references pop culture, sports, or everyday life; is ambiguous with no clear target group.
+
+EXAMPLES OF HATEFUL MEMES:
+- "go back to your country you dont belong here" (targets nationality)
+- "women belong in the kitchen not the office" (targets gender)
+- "they are all criminals and rapists" (targets ethnicity)
+- "the jihad squad" (dehumanizes religious group)
+- "did you know chinese eat dogs savages" (targets ethnicity with slur)
+
+EXAMPLES OF NOT HATEFUL MEMES:
+- "when you already started eating and someone says lets pray" (relatable humor)
+- "city workers repair statue cover it up with black sheet" (news/event)
+- "me at 3am eating cereal" (everyday life)
+- "when monday hits different" (general frustration)
+- "i hate you, you are pathetic" (personal conflict, no group targeted)
 
 SIMILAR LABELED MEMES FROM DATABASE:
 {context}
@@ -102,6 +115,7 @@ NEW MEME TO ANALYZE:
 
 Using the similar examples above as context, analyze this meme carefully.
 Consider sarcasm, irony, cultural references, and dog-whistles.
+If the meme contains slurs, attacks on ethnic/religious groups, or dehumanizing language — label it HATEFUL even if it seems like a joke.
 
 Respond in EXACTLY this format with no extra text:
 EXPLANATION: [what this meme means in 2-3 sentences]
@@ -116,7 +130,6 @@ CONFIDENCE: [a decimal between 0.0 and 1.0 representing your confidence, e.g. 0.
 def call_llama(prompt: str) -> str:
     """
     Sends the prompt to Llama 3 on GCP via Ollama.
-    
     """
     try:
         response = requests.post(
@@ -142,9 +155,6 @@ def call_llama(prompt: str) -> str:
 def parse_response(llm_response: str, top_citation: dict) -> dict:
     """
     Parses LLM output into structured fields.
-    FIX #6 — heuristic override is transparent and limited.
-    FIX #8 — neutral fallback text for safe memes.
-    FIX #9 — parses CONFIDENCE field from LLM response.
     """
     explanation = ""
     hate_label  = "uncertain"
@@ -171,8 +181,7 @@ def parse_response(llm_response: str, top_citation: dict) -> dict:
     except Exception:
         pass
 
-    # Heuristic override only fires on near-exact match
-    # and is transparent in the reasoning text
+    # Heuristic override — fires on near-exact match only
     db_dist  = top_citation.get("distance", 1.0)
     db_label = top_citation.get("label_str", "not hateful")
     db_id    = str(top_citation.get("meme_id", "unknown"))
@@ -186,11 +195,10 @@ def parse_response(llm_response: str, top_citation: dict) -> dict:
         reasoning   = "High-confidence ground truth match in ChromaDB — label derived from database."
         confidence  = 0.97
 
-    # confidence fallback — use distance-based estimate if LLM didn't return one
+    # confidence fallback
     if confidence is None:
         confidence = round(max(0.5, 1.0 - (db_dist / 2.0)), 2)
 
-    # Neutral fallback text that doesn't imply hate for safe memes
     if not explanation:
         explanation = "The model processed this meme but could not generate a structured explanation."
     if not reasoning:
