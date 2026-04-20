@@ -14,7 +14,7 @@ How to run:
     streamlit run app.py
 
 Then open browser at: http://localhost:8501
-For GCP deployment: http://34.10.8.118:8501
+For GCP deployment: http://YOUR_GCP_EXTERNAL_IP:8501
 """
 
 import os
@@ -25,7 +25,6 @@ from pipeline import analyze_meme as run_pipeline
 
 
 # PAGE CONFIG
-# ──────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="MemeRAG",
     page_icon="😂",
@@ -35,7 +34,6 @@ st.set_page_config(
 
 
 # FONTS + GLOBAL CSS
-# ──────────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@fontsource/fredoka@5/700.min.css">
@@ -264,8 +262,6 @@ html, body, [class*="css"] { font-family:'Nunito',sans-serif !important; }
 
 
 # CONSTANTS & HELPERS
-# ──────────────────────────────────────────────────────────────────────────────
-
 PRESETS = [
     "when you already started eating and someone says 'lets pray'",
     "need a hug ? i love hugs",
@@ -358,7 +354,6 @@ def extract_id_from_source_url(source_url: str) -> str:
 
 
 # SESSION STATE
-# ──────────────────────────────────────────────────────────────────────────────
 if "meme_text" not in st.session_state:
     st.session_state["meme_text"] = ""
 if "result" not in st.session_state:
@@ -373,7 +368,6 @@ def apply_preset(text: str):
 
 
 # NAVBAR
-# ──────────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="meme-nav">
   <div class="logo-cluster">
@@ -392,14 +386,13 @@ st.markdown("""
   <div class="nav-pills">
     <span class="nav-pill pill-a">33,000 memes</span>
     <span class="nav-pill pill-b">Llama 3 · local</span>
-    <span class="nav-pill pill-c">F1 · 0.73</span>
+    <span class="nav-pill pill-c">F1 · 0.92</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
 
 # INPUT
-# ──────────────────────────────────────────────────────────────────────────────
 st.markdown('<div class="card card-input"><div class="section-label">📝 Drop your meme text</div>', unsafe_allow_html=True)
 
 input_left, input_right = st.columns([1.6, 1], gap="medium")
@@ -436,7 +429,6 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 
 # PIPELINE
-# ──────────────────────────────────────────────────────────────────────────────
 if analyze_clicked and meme_input.strip():
     st.session_state.result      = None
     st.session_state.run_effects = True
@@ -471,11 +463,8 @@ if analyze_clicked and meme_input.strip():
 
 
 # SPLIT-SCREEN RESULTS
-# ──────────────────────────────────────────────────────────────────────────────
 left_col, right_col = st.columns([1.1, 1], gap="large")
 
-
-# ── LEFT — image + explanation ────────────────────────────────────────────────
 with left_col:
     if not st.session_state.result:
         st.markdown("""
@@ -533,7 +522,6 @@ with left_col:
         </div>""", unsafe_allow_html=True)
 
 
-# ── RIGHT — toast + verdict ───────────────────────────────────────────────────
 with right_col:
     if st.session_state.result:
         r = st.session_state.result
@@ -582,7 +570,6 @@ with right_col:
 
 
 # RETRIEVED EVIDENCE — full width
-# ──────────────────────────────────────────────────────────────────────────────
 if st.session_state.result:
     sources = st.session_state.result.get("citations", [])
 
