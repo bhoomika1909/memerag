@@ -81,7 +81,6 @@ html, body, [class*="css"] {
 
 .stApp {
   background: var(--bg-0) !important;
-  position: relative;
 }
 
 .stApp::before {
